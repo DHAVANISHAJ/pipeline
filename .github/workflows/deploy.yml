@@ -29,9 +29,17 @@ jobs:
           ssh -o StrictHostKeyChecking=no deployuser@34.136.91.206 "bash -c '
             cd ~/pipeline &&
             git pull origin main &&
+            
+            # Log deployment timestamp
             echo \"New commit added on: \$(date)\" | tee -a ~/pipeline/deployment.log &&
+            
+            # Store latest commit details
+            git log -1 --pretty=format:\"%h - %s (%an)\" > ~/latest_commit.txt &&
+            
+            # Restart the application
             pm2 restart app.js
           '"
+
 
 
 
