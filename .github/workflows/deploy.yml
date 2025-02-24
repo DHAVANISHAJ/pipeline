@@ -26,7 +26,13 @@ jobs:
 
       - name: Deploy Code to GCP VM
         run: |
-          ssh -o StrictHostKeyChecking=no deployuser@34.136.91.206 "bash -c 'cd ~/pipeline && git pull origin main && pm2 restart app.js'"
+          ssh -o StrictHostKeyChecking=no deployuser@34.136.91.206 "bash -c '
+            cd ~/pipeline &&
+            git pull origin main &&
+            echo \"New commit added on: \$(date)\" | tee -a ~/pipeline/deployment.log &&
+            pm2 restart app.js
+          '"
+
 
 
 
