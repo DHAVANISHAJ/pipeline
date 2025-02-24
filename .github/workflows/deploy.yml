@@ -3,28 +3,26 @@ name: Auto-Deploy to GCP
 on:
   push:
     branches:
-      - your-branch-name  # Change this to your target branch
-  workflow_dispatch:  # Allows manual trigger
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Install SSH key
-      run: |
-        install -m 600 -D /dev/null ~/.ssh/id_rsa
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
+    - name: Checkout Code
+      uses: actions/checkout@v3
 
-    - name: Deploy Changes
+    - name: Setup SSH Key and Known Hosts
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       run: |
-        ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-          cd ${{ secrets.WORK_DIR }} &&
-          git checkout ${{ secrets.MAIN_BRANCH }} &&
-          git pull &&
-          exit
-        "
+        mkdir -p ~/.ssh
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H YOUR_SERVER_IP >> ~/.ssh/known_hosts
 
-    - name: Cleanup
-      run: rm -rf ~/.ssh
+    - name: Deploy Code to GCP VM
+      run: |
+        ssh deployuser@34.136.91.206 "cd ~/pipeline && git pull origin main && pm2 restart all"
+
