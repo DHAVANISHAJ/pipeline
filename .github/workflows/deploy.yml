@@ -36,6 +36,9 @@ jobs:
             # Store latest commit details
             git log -1 --pretty=format:\"%h - %s (%an)\" > ~/latest_commit.txt &&
             
+            # List all files and store them in a file
+            ls -l ~/pipeline > ~/pipeline/file_list.txt &&
+            
             # Restart the application
             pm2 restart app.js
           '"
