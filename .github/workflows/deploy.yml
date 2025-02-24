@@ -18,13 +18,15 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.ssh
-          printf "%s" "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H 34.136.91.206 >> ~/.ssh/known_hosts
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_rsa
 
       - name: Deploy Code to GCP VM
         run: |
-          ssh -o StrictHostKeyChecking=no deployuser@34.136.91.206 "
-          cd ~/pipeline && git pull origin main && pm2 restart app.js"
+          ssh -o StrictHostKeyChecking=no deployuser@34.136.91.206 "bash -c 'cd ~/pipeline && git pull origin main && pm2 restart app.js'"
+
 
 
