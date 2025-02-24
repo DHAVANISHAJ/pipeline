@@ -1,0 +1,30 @@
+name: Auto-Deploy to GCP
+
+on:
+  push:
+    branches:
+      - your-branch-name  # Change this to your target branch
+  workflow_dispatch:  # Allows manual trigger
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install SSH key
+      run: |
+        install -m 600 -D /dev/null ~/.ssh/id_rsa
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
+
+    - name: Deploy Changes
+      run: |
+        ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+          cd ${{ secrets.WORK_DIR }} &&
+          git checkout ${{ secrets.MAIN_BRANCH }} &&
+          git pull &&
+          exit
+        "
+
+    - name: Cleanup
+      run: rm -rf ~/.ssh
