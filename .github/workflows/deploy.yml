@@ -3,26 +3,28 @@ name: Auto-Deploy to GCP
 on:
   push:
     branches:
-      - main
+      - main  # Triggers only on changes to the main branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-    - name: Setup SSH Key and Known Hosts
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      run: |
-        mkdir -p ~/.ssh
-        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H 34.136.91.206 >> ~/.ssh/known_hosts
+      - name: Setup SSH Key and Known Hosts
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf "%s" "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H 34.136.91.206 >> ~/.ssh/known_hosts
 
-    - name: Deploy Code to GCP VM
-      run: |
-        ssh deployuser@34.136.91.206 "cd ~/pipeline && git pull origin main && pm2 restart all"
+      - name: Deploy Code to GCP VM
+        run: |
+          ssh -o StrictHostKeyChecking=no deployuser@34.136.91.206 "
+          cd ~/pipeline && git pull origin main && pm2 restart app.js"
+
 
