@@ -34,14 +34,15 @@ jobs:
             echo \"New commit added on: \$(date)\" | tee -a ~/pipeline/deployment.log &&
             
             # Store latest commit details
-            git log -1 --pretty=format:\"%h - %s (%an)\" > ~/latest_commit.txt &&
+            git log -1 --pretty=format:\"%h - %s (%an)\" > ~/pipeline/latest_commit.txt &&
             
-            # List all files and store them in a file
-            ls -l ~/pipeline > ~/pipeline/file_list.txt &&
+            # List all files inside a specific directory and store them in a file
+            ls -l ~/pipeline/newcommit > ~/pipeline/newcommit/file_list.txt &&
             
             # Restart the application
             pm2 restart app.js
           '"
+
 
 
 
