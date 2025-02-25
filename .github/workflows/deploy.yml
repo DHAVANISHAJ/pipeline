@@ -39,7 +39,8 @@ jobs:
 
       - name: Restart Application (if needed)
         run: |
-          ssh -o StrictHostKeyChecking=no deployuser@34.136.91.206 "pm2 restart app.js"
+          ssh -o StrictHostKeyChecking=no deployuser@34.136.91.206 "pm2 restart app || pm2 start app.js --name app"
+
 
 
 
