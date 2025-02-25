@@ -35,11 +35,17 @@ jobs:
 
       - name: Transfer Files to GCP VM
         run: |
-          scp -o StrictHostKeyChecking=no -r commit_data deployuser@34.136.91.206:/home/deployuser/latest_commit
+          scp -o StrictHostKeyChecking=no -r * deployuser@34.136.91.206:/home/deployuser/latest_commit
 
-      - name: Restart Application (if needed)
+      - name: Install Dependencies & Restart Application
         run: |
-          ssh -o StrictHostKeyChecking=no deployuser@34.136.91.206 "pm2 restart app.js"
+          ssh -o StrictHostKeyChecking=no deployuser@34.136.91.206 << 'EOF'
+          cd /home/deployuser/latest_commit
+          npm install
+          pm2 restart app.js || pm2 start app.js --name app
+          pm2 save
+          EOF
+
 
 
 
