@@ -1,56 +1,31 @@
-name: Auto-Deploy to GCP
+name: Deploy to GCP
 
 on:
   push:
     branches:
-      - main # Runs only when changes are pushed to the main branch
+      - main  # Run this workflow when code is pushed to main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout Code
+      - name: Checkout the code
         uses: actions/checkout@v3
 
-      - name: Setup SSH Key and Known Hosts
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.GCP_SSH_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.GCP_HOST }} >> ~/.ssh/known_hosts
-          eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/id_rsa
-
-      - name: Save Commit Info Locally
-        run: |
-          mkdir -p commit_data
-          echo "Commit: ${{ github.sha }}" > commit_data/latest_commit.txt
-          echo "Message: ${{ github.event.head_commit.message }}" >> commit_data/latest_commit.txt
-          echo "Author: ${{ github.event.head_commit.author.name }}" >> commit_data/latest_commit.txt
-          echo "Date: ${{ github.event.head_commit.timestamp }}" >> commit_data/latest_commit.txt
-          ls -1 commit_data > commit_data/file_list.txt
-
-      - name: Transfer Files to GCP VM
-        run: |
-          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -r * ${{ secrets.GCP_USER }}@${{ secrets.GCP_HOST }}:/home/deployuser/app/
-
-      - name: Deploy to GCP Server
-        uses: appleboy/ssh-action@v0.1.10
+      - name: SSH into the server and pull the latest code
+        uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.GCP_HOST }}
           username: ${{ secrets.GCP_USER }}
           key: ${{ secrets.GCP_SSH_KEY }}
           script: |
-            cd /home/deployuser/app
-            git fetch --all
-            git reset --hard origin/main
-            git pull origin main
-            ls -1 | grep latest_commit.txt
+            cd /home/deployuser/latest_commit
+            git reset --hard origin/main  # Reset local changes
+            git pull origin main  # Pull the latest changes
+            npm install  # Install dependencies if needed
+            pm2 restart app  # Restart your application
 
-      - name: Restart Application (if needed)
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.GCP_USER }}@${{ secrets.GCP_HOST }} "pm2 restart app || pm2 start app.js --name app"
 
 
 
