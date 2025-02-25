@@ -3,7 +3,7 @@ name: Auto-Deploy to GCP
 on:
   push:
     branches:
-      - main  # Triggers only on changes to the main branch
+      - main  # Runs only when changes are pushed to the main branch
 
 jobs:
   deploy:
@@ -24,24 +24,22 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
 
-      - name: Deploy Code to GCP VM
+      - name: Save Commit Info Locally
         run: |
-          ssh -o StrictHostKeyChecking=no deployuser@34.136.91.206 "bash -c '
-            cd ~/pipeline &&
-            git pull origin main &&
-            
-            # Log deployment timestamp
-            echo \"New commit added on: \$(date)\" | tee -a ~/pipeline/deployment.log &&
-            
-            # Store latest commit details
-            git log -1 --pretty=format:\"%h - %s (%an)\" > ~/pipeline/latest_commit.txt &&
-            
-            # List all files inside a specific directory and store them in a file
-            ls -l ~/pipeline/newcommit > ~/pipeline/newcommit/file_list.txt &&
-            
-            # Restart the application
-            pm2 restart app.js
-          '"
+          mkdir -p commit_data
+          echo "Commit: ${{ github.sha }}" > commit_data/latest_commit.txt
+          echo "Message: ${{ github.event.head_commit.message }}" >> commit_data/latest_commit.txt
+          echo "Author: ${{ github.event.head_commit.author.name }}" >> commit_data/latest_commit.txt
+          echo "Timestamp: ${{ github.event.head_commit.timestamp }}" >> commit_data/latest_commit.txt
+          ls -1 > commit_data/file_list.txt
+
+      - name: Transfer Files to GCP VM
+        run: |
+          scp -o StrictHostKeyChecking=no -r commit_data deployuser@34.136.91.206:/home/deployuser/latest_commit
+
+      - name: Restart Application (if needed)
+        run: |
+          ssh -o StrictHostKeyChecking=no deployuser@34.136.91.206 "pm2 restart app.js"
 
 
 
