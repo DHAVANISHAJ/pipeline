@@ -1,58 +1,18 @@
-name: Auto-Deploy to GCP
-
-on:
-  push:
-    branches:
-      - main  # Runs only when changes are pushed to the main branch
-
+name: GitHub Actions Demo
+run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+on: [push]
 jobs:
-  deploy:
-    runs-on: self-hosted
-
+  Explore-GitHub-Actions:
+    runs-on: learn
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Setup SSH Key and Known Hosts
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+      - run: echo "🖥️ The workflow is now ready to test your code on the runner."
+      - name: List files in the repository
         run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H 34.136.91.206 >> ~/.ssh/known_hosts
-          eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/id_rsa
-
-      - name: Save Commit Info Locally
-        run: |
-          mkdir -p commit_data
-          echo "Commit: ${{ github.sha }}" > commit_data/latest_commit.txt
-          echo "Message: ${{ github.event.head_commit.message }}" >> commit_data/latest_commit.txt
-          echo "Author: ${{ github.event.head_commit.author.name }}" >> commit_data/latest_commit.txt
-          echo "Timestamp: ${{ github.event.head_commit.timestamp }}" >> commit_data/latest_commit.txt
-          ls -1 > commit_data/file_list.txt
-
-      - name: Transfer Files to GCP VM
-        run: |
-          scp -o StrictHostKeyChecking=no -r * deployuser@34.136.91.206:/home/deployuser/latest_commit
-
-      - name: Install Dependencies & Restart Application
-        run: |
-          ssh -o StrictHostKeyChecking=no deployuser@34.136.91.206 << 'EOF'
-          cd /home/deployuser/latest_commit
-          npm install
-          pm2 restart app.js || pm2 start app.js --name app
-          pm2 save
-          EOF
-
-
-
-
-
-
-
-
-
-
-
+          ls ${{ github.workspace }}
+      - run: echo "🍏 This job's status is ${{ job.status }}."
